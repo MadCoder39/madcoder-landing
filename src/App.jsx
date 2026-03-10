@@ -160,7 +160,7 @@ function Nav() {
   const links = [
     { label: 'About', href: '#about' },
     { label: 'Experience', href: '#experience' },
-    { label: 'Strengths', href: '#strengths' },
+    { label: 'Value', href: '#strengths' },
     { label: 'Projects', href: '#projects' },
     { label: 'Contact', href: '#contact' },
   ]
