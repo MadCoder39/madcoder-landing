@@ -939,8 +939,7 @@ function Footer() {
   return (
     <footer className="border-t border-white/5 py-8 px-6 text-center text-sm text-zinc-600">
       <p>
-        © {new Date().getFullYear()} Ilya Efimov · Built with React, Tailwind &
-        AI-first workflows
+        © {new Date().getFullYear()} Ilya Efimov · Built with AI
       </p>
     </footer>
   )
