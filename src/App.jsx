@@ -1,5 +1,5 @@
-import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { useRef, useState, useCallback } from 'react'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
   Linkedin,
   Github,
@@ -19,6 +19,8 @@ import {
   Target,
   Code,
   Bot,
+  Lock,
+  X,
 } from 'lucide-react'
 
 /* ───────────────────────── helpers ───────────────────────── */
@@ -60,6 +62,95 @@ function GlowBlob({ className }) {
     <div
       className={`pointer-events-none absolute rounded-full blur-3xl opacity-20 ${className}`}
     />
+  )
+}
+
+function CVModal({ isOpen, onClose }) {
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(false)
+  const [checking, setChecking] = useState(false)
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault()
+    setChecking(true)
+    setError(false)
+
+    const encoder = new TextEncoder()
+    const data = encoder.encode(password)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+
+    if (hashHex === '5fc1188e2bfbaf68b62aa2fb37686c6713c289aa80a2d7cb762bfe0e16b9c468') {
+      window.open('https://drive.google.com/file/d/1dfEEe0krXma3MdERVsJJwxXGxaGiqz9a/view?usp=sharing', '_blank')
+      setPassword('')
+      onClose()
+    } else {
+      setError(true)
+    }
+    setChecking(false)
+  }, [password, onClose])
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          onClick={onClose}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-dark-800 p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-6">
+              <Lock className="mx-auto w-10 h-10 text-accent-orange mb-3" />
+              <h3 className="text-xl font-bold text-white">Download CV</h3>
+              <p className="mt-2 text-sm text-zinc-400">
+                Enter the password to download.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError(false) }}
+                placeholder="Password"
+                autoFocus
+                className="w-full rounded-xl border border-white/10 bg-dark-900 px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-accent-orange/50 transition-colors"
+              />
+              {error && (
+                <p className="mt-2 text-xs text-red-400">
+                  Incorrect password. Please try again.
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={checking || !password}
+                className="mt-4 w-full rounded-xl bg-accent-orange px-5 py-3 text-sm font-semibold text-dark-900 hover:shadow-lg hover:shadow-accent-orange/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {checking ? 'Verifying...' : 'Download'}
+              </button>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -115,7 +206,7 @@ function Nav() {
 
 /* ───────────────────────── Hero ───────────────────────── */
 
-function Hero() {
+function Hero({ onCVClick }) {
   return (
     <section
       id="hero"
@@ -134,7 +225,7 @@ function Hero() {
         >
           <div className="absolute inset-0 mx-auto w-44 h-44 md:w-52 md:h-52 rounded-full bg-gradient-to-br from-accent-orange via-accent-orange-light to-accent-green blur-2xl opacity-40 animate-pulse" />
           <img
-            src="/photo.jpg"
+            src="/photo.JPG"
             alt="Ilya Efimov"
             className="relative mx-auto w-44 h-44 md:w-52 md:h-52 rounded-full object-cover border-2 border-white/10 shadow-2xl shadow-accent-orange/20"
             onError={(e) => {
@@ -205,16 +296,19 @@ function Hero() {
           className="mt-10 flex justify-center gap-5"
         >
           {[
-            { icon: Linkedin, href: '#', label: 'LinkedIn' },
-            { icon: Github, href: '#', label: 'GitHub' },
-            { icon: FileText, href: '#', label: 'CV' },
-            { icon: Mail, href: 'mailto:hello@example.com', label: 'Email' },
-          ].map(({ icon: Icon, href, label }) => (
+            { icon: Linkedin, href: 'https://www.linkedin.com/in/madcoder39/', label: 'LinkedIn' },
+            { icon: Github, href: 'https://github.com/MadCoder39', label: 'GitHub' },
+            { icon: FileText, href: null, label: 'CV', onClick: onCVClick },
+            { icon: Mail, href: 'mailto:madcoder39@gmail.com', label: 'Email' },
+          ].map(({ icon: Icon, href, label, onClick }) => (
             <a
               key={label}
-              href={href}
+              href={href || undefined}
+              target={href && !href.startsWith('mailto') ? '_blank' : undefined}
+              rel={href && !href.startsWith('mailto') ? 'noopener noreferrer' : undefined}
+              onClick={onClick ? (e) => { e.preventDefault(); onClick() } : undefined}
               aria-label={label}
-              className="group flex items-center justify-center w-11 h-11 rounded-full border border-white/10 bg-white/5 text-zinc-400 hover:text-accent-orange hover:border-accent-orange/40 hover:bg-accent-orange/10 transition-all duration-300"
+              className="group flex items-center justify-center w-11 h-11 rounded-full border border-white/10 bg-white/5 text-zinc-400 hover:text-accent-orange hover:border-accent-orange/40 hover:bg-accent-orange/10 transition-all duration-300 cursor-pointer"
             >
               <Icon className="w-5 h-5" />
             </a>
@@ -236,15 +330,15 @@ const highlights = [
   },
   {
     icon: TrendingUp,
-    stat: '7-fig',
+    stat: '7-Figure Revenue',
     label: 'Reached 7-figure annual turnover',
     color: 'green',
   },
   {
     icon: Rocket,
-    stat: '6-fig',
+    stat: '6-Figure Runway',
     label: 'Raised 6-figure startup runway',
-    color: 'orange',
+    color: 'green',
   },
   {
     icon: DollarSign,
@@ -254,15 +348,15 @@ const highlights = [
   },
   {
     icon: Briefcase,
-    stat: '7-digit',
+    stat: '7-Digit Round',
     label: 'Helped secure a 7-digit investment round',
-    color: 'orange',
+    color: 'green',
   },
   {
     icon: Layers,
-    stat: '4 verticals',
+    stat: '4 Verticals',
     label: 'AI, GameDev, Web3, and DevOps',
-    color: 'green',
+    color: 'orange',
   },
 ]
 
@@ -296,9 +390,9 @@ function Highlights() {
                   <h.icon className="w-5 h-5" />
                 </div>
                 <div
-                  className={`text-2xl font-bold ${
+                  className={`font-bold ${
                     isOrange ? 'text-accent-orange' : 'text-accent-green'
-                  }`}
+                  } ${h.stat.length > 10 ? 'text-xl' : 'text-2xl'}`}
                 >
                   {h.stat}
                 </div>
@@ -369,7 +463,7 @@ const experiences = [
       'Raised 6-figure startup runway and led BD across AI and infrastructure concepts.',
       'Built and tested MVPs across AI agents, private AI, multi-agent systems, and Web3 infrastructure.',
     ],
-    accent: 'green',
+    accent: 'orange',
   },
   {
     title: 'The Games Cloud',
@@ -380,6 +474,16 @@ const experiences = [
       'Took the product to $2K MRR in 6 months.',
     ],
     accent: 'orange',
+  },
+  {
+    title: 'Althimis Inc.',
+    role: 'Senior Unity Developer',
+    descriptor: 'Defense-tech software and B2B virtual environments',
+    bullets: [
+      'Developed proprietary software for a defense-tech environment and contributed to a B2B web-based MMO project.',
+      'Worked on complex real-time systems in a technically demanding product setting.',
+    ],
+    accent: 'green',
   },
   {
     title: 'Phantasma Labs',
@@ -459,36 +563,34 @@ function Experience() {
 
 const strengths = [
   {
-    title: 'Technical & Product',
+    title: 'Product & Technical',
     icon: Code,
     items: [
-      'AI-first workflows',
-      'product discovery',
-      'MVP development',
-      'developer tooling',
-      'systems thinking',
+      'AI-First Workflows',
+      'Product Development',
+      'MVPs',
+      'Developer Tooling',
+      'Solutions Architecture',
     ],
   },
   {
-    title: 'Commercial & GTM',
+    title: 'Growth & Positioning',
     icon: Target,
     items: [
-      'technical business development',
-      'partnerships',
-      'solution positioning',
-      'founder-led sales',
-      'packaging',
+      'Technical Business Development',
+      'Partnerships',
+      'Solution Positioning',
+      'Sales',
     ],
   },
   {
     title: 'Execution',
     icon: Zap,
     items: [
-      'cross-functional leadership',
-      'fast iteration',
-      'stakeholder communication',
-      'roadmap shaping',
-      'technical translation',
+      'Cross-Functional Leadership',
+      'Fast Iteration',
+      'Roadmap Planning',
+      'Technical Translation',
     ],
   },
 ]
@@ -497,11 +599,11 @@ function Strengths() {
   return (
     <Section id="strengths" className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl">
-        <SectionTitle sub="Core competencies across product, growth, and execution">
-          Strengths
+        <SectionTitle>
+          Where I Add Value
         </SectionTitle>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="flex flex-col md:flex-row md:justify-center gap-5">
           {strengths.map((col, i) => (
             <motion.div
               key={i}
@@ -509,17 +611,17 @@ function Strengths() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.5, delay: i * 0.12 }}
-              className="rounded-2xl border border-white/5 bg-dark-800/50 p-7 hover:border-white/10 transition-all duration-300"
+              className="rounded-2xl border border-white/5 bg-dark-800/50 p-6 hover:border-white/10 transition-all duration-300 md:w-64 flex-shrink-0"
             >
-              <div className="mb-5 inline-flex items-center justify-center w-11 h-11 rounded-xl bg-accent-orange/10 text-accent-orange">
-                <col.icon className="w-5 h-5" />
+              <div className="mb-4 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-accent-orange/10 text-accent-orange">
+                <col.icon className="w-4.5 h-4.5" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-5">{col.title}</h3>
-              <ul className="space-y-3">
+              <h3 className="text-base font-bold text-white mb-4">{col.title}</h3>
+              <ul className="space-y-2.5">
                 {col.items.map((item, j) => (
                   <li
                     key={j}
-                    className="flex items-center gap-3 text-sm text-zinc-400"
+                    className="flex items-center gap-2.5 text-sm text-zinc-400"
                   >
                     <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-accent-green/60" />
                     {item}
@@ -538,28 +640,49 @@ function Strengths() {
 
 const projects = [
   {
-    image: '/project-1.jpg',
-    title: 'Project Title One',
+    image: '/projects/the games cloud.jpeg',
+    title: 'The Games Cloud',
+    link: 'https://www.linkedin.com/company/the-games-cloud',
     summary:
-      'A brief description of the project, what problem it solved, and the impact it had.',
-    role: 'Product Lead & BD',
-    outcome: 'Shipped MVP in 8 weeks, onboarded 3 design partners.',
-  },
-  {
-    image: '/project-2.jpg',
-    title: 'Project Title Two',
-    summary:
-      'A brief description of the project, what problem it solved, and the impact it had.',
+      'From internal tool to MRR-generating startup. DevOps-as-a-Service for game development studios.',
     role: 'Co-Founder & CEO',
     outcome: 'Reached $2K MRR within 6 months of launch.',
   },
   {
-    image: '/project-3.jpg',
-    title: 'Project Title Three',
+    image: '/projects/77bit.jpeg',
+    title: '77-Bit',
+    link: 'https://77-bit.com/',
     summary:
-      'A brief description of the project, what problem it solved, and the impact it had.',
-    role: 'Technical BD & Solutions',
-    outcome: 'Secured partnership with 2 enterprise clients.',
+      'Led game design and narrative development. Helped take the product from concept to MVP in 12 weeks and supported NFT sales totaling $20M.',
+    role: 'Producer',
+    outcome: 'MVP delivered in 12 weeks, contributed to a $20M NFT sales outcome.',
+  },
+  {
+    image: '/projects/phantasma.svg',
+    title: 'Phantasma Labs',
+    link: 'https://www.phantasma.global/',
+    summary:
+      'Led development of an UE4 city simulation used for self-driving cars AI training. Helped secure a 7-digit funding round and lead a team of senior engineers.',
+    role: 'Unreal Engine Developer',
+    outcome: 'Contributed to a 7-digit funding round and built out a senior engineering team.',
+  },
+  {
+    image: '/projects/VATTS.jpeg',
+    title: 'VATTS: AI for Curious Kids',
+    link: 'https://apps.apple.com/us/app/vatts-ai-for-curious-kids/id6450422355',
+    summary:
+      'Built the initial MVP and launched it on mobile app stores. Helped validate the concept and achieve early traction with users.',
+    role: 'Producer',
+    outcome: 'MVP launched and initial traction achieved.',
+  },
+  {
+    image: '/projects/the oct.png',
+    title: 'TheOct.xyz',
+    link: 'https://theoct.xyz',
+    summary:
+      'Built the initial MVP and launched it to market, helping validate the product direction and support early user traction.',
+    role: 'Producer',
+    outcome: 'MVP launched and early traction supported.',
   },
 ]
 
@@ -571,7 +694,7 @@ function Projects() {
           Featured Projects
         </SectionTitle>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="flex flex-wrap justify-center gap-6">
           {projects.map((p, i) => (
             <motion.div
               key={i}
@@ -579,7 +702,7 @@ function Projects() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group rounded-2xl border border-white/5 bg-dark-800/50 overflow-hidden hover:border-white/10 transition-all duration-300"
+              className="group rounded-2xl border border-white/5 bg-dark-800/50 overflow-hidden hover:border-white/10 transition-all duration-300 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
             >
               <div className="relative h-44 bg-dark-700 overflow-hidden">
                 <img
@@ -595,7 +718,30 @@ function Projects() {
               </div>
 
               <div className="p-6">
-                <h3 className="text-lg font-bold text-white">{p.title}</h3>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  {p.link ? (
+                    <a
+                      href={p.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-accent-orange transition-colors"
+                    >
+                      {p.title}
+                    </a>
+                  ) : (
+                    p.title
+                  )}
+                  {p.link && (
+                    <a
+                      href={p.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-600 hover:text-accent-orange transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </h3>
                 <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
                   {p.summary}
                 </p>
@@ -624,11 +770,20 @@ function Projects() {
 
 function AIWorkflow() {
   const lines = [
-    { prompt: '>', text: 'cursor --project ai-agent --model claude-4' },
-    { prompt: '>', text: 'mcp connect research-pipeline' },
-    { prompt: '✓', text: 'Connected to 3 sub-agents' },
-    { prompt: '>', text: 'generate prototype --iterate --ship' },
-    { prompt: '✓', text: 'MVP deployed in 4 hours' },
+    { prompt: '>', text: 'init ai-workflow' },
+    { prompt: '', text: 'tools: Cursor, Claude Code, MCP' },
+    { prompt: '>', text: 'receive requirements --format napkin' },
+    { prompt: '', text: 'status: unwrinkling napkin' },
+    { prompt: '>', text: 'analyze requirements' },
+    { prompt: '', text: 'status: extracting actual task' },
+    { prompt: '>', text: 'build first-80' },
+    { prompt: '', text: 'status: surprisingly fast' },
+    { prompt: '>', text: 'build second-80' },
+    { prompt: '', text: 'status: where real work begins' },
+    { prompt: '>', text: 'review output' },
+    { prompt: '', text: 'checks: logic, edge cases, UX' },
+    { prompt: '>', text: 'ship prototype' },
+    { prompt: '', text: 'result: delivered' },
   ]
 
   return (
@@ -694,26 +849,24 @@ function AIWorkflow() {
               </span>
             </div>
 
-            <div className="p-5 font-mono text-sm space-y-2">
+            <div className="p-5 font-mono text-sm space-y-1.5">
               {lines.map((line, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: 0.4 + i * 0.12 }}
+                  transition={{ duration: 0.3, delay: 0.4 + i * 0.07 }}
                   className="flex items-center gap-2"
                 >
-                  <span
-                    className={
-                      line.prompt === '✓'
-                        ? 'text-accent-green'
-                        : 'text-accent-orange'
-                    }
-                  >
-                    {line.prompt}
-                  </span>
-                  <span className="text-zinc-300">{line.text}</span>
+                  {line.prompt ? (
+                    <>
+                      <span className="text-accent-orange">{line.prompt}</span>
+                      <span className="text-zinc-300">{line.text}</span>
+                    </>
+                  ) : (
+                    <span className="text-zinc-500 pl-4">{line.text}</span>
+                  )}
                 </motion.div>
               ))}
               <div className="flex items-center gap-2 mt-1">
@@ -730,7 +883,7 @@ function AIWorkflow() {
 
 /* ───────────────────────── Contact ───────────────────────── */
 
-function Contact() {
+function Contact({ onCVClick }) {
   return (
     <Section id="contact" className="py-24 md:py-32">
       <div className="mx-auto max-w-3xl text-center">
@@ -754,23 +907,25 @@ function Contact() {
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <a
-              href="mailto:hello@example.com"
+              href="mailto:madcoder39@gmail.com"
               className="inline-flex items-center gap-2 rounded-full bg-accent-orange px-7 py-3 text-sm font-semibold text-dark-900 shadow-lg shadow-accent-orange/25 hover:shadow-accent-orange/40 hover:scale-105 transition-all duration-300"
             >
               <Mail className="w-4 h-4" /> Email Me
             </a>
             <a
-              href="#"
+              href="https://www.linkedin.com/in/madcoder39/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/25 transition-all duration-300"
             >
               <Linkedin className="w-4 h-4" /> LinkedIn
             </a>
-            <a
-              href="#"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/25 transition-all duration-300"
+            <button
+              onClick={onCVClick}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/25 transition-all duration-300 cursor-pointer"
             >
               <FileText className="w-4 h-4" /> Download CV
-            </a>
+            </button>
           </div>
         </motion.div>
       </div>
@@ -794,18 +949,22 @@ function Footer() {
 /* ───────────────────────── App ───────────────────────── */
 
 export default function App() {
+  const [cvModalOpen, setCvModalOpen] = useState(false)
+  const openCVModal = useCallback(() => setCvModalOpen(true), [])
+
   return (
     <div className="relative overflow-x-hidden">
       <Nav />
-      <Hero />
+      <Hero onCVClick={openCVModal} />
       <Highlights />
       <About />
       <Experience />
       <Strengths />
       <Projects />
       <AIWorkflow />
-      <Contact />
+      <Contact onCVClick={openCVModal} />
       <Footer />
+      <CVModal isOpen={cvModalOpen} onClose={() => setCvModalOpen(false)} />
     </div>
   )
 }
