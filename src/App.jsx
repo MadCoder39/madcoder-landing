@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
   Linkedin,
@@ -26,25 +26,27 @@ import {
 /* ───────────────────────── helpers ───────────────────────── */
 
 function useIsMobile() {
-  const [mobile, setMobile] = useState(false)
-  useState(() => {
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
+  useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
-    setMobile(mq.matches)
     const handler = (e) => setMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
-  })
+  }, [])
   return mobile
 }
 
 function AnimCard({ children, index = 0, className = '', ...rest }) {
   const mobile = useIsMobile()
+  if (mobile) {
+    return <div className={className} {...rest}>{children}</div>
+  }
   return (
     <motion.div
-      initial={mobile ? { opacity: 0 } : { opacity: 0, y: 30 }}
-      whileInView={mobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: mobile ? '-20px' : '-40px' }}
-      transition={mobile ? { duration: 0.3 } : { duration: 0.5, delay: index * 0.08 }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
       className={className}
       {...rest}
     >
@@ -58,13 +60,21 @@ function Section({ children, id, className = '' }) {
   const isInView = useInView(ref, { once: true, margin: '-40px' })
   const mobile = useIsMobile()
 
+  if (mobile) {
+    return (
+      <section id={id} className={`relative px-6 md:px-12 lg:px-20 ${className}`}>
+        {children}
+      </section>
+    )
+  }
+
   return (
     <motion.section
       ref={ref}
       id={id}
-      initial={{ opacity: 0, y: mobile ? 0 : 40 }}
+      initial={{ opacity: 0, y: 40 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: mobile ? 0.3 : 0.7, ease: 'easeOut' }}
+      transition={{ duration: 0.7, ease: 'easeOut' }}
       className={`relative px-6 md:px-12 lg:px-20 ${className}`}
     >
       {children}
@@ -111,7 +121,7 @@ function CVModal({ isOpen, onClose }) {
     const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 
     if (hashHex === '5fc1188e2bfbaf68b62aa2fb37686c6713c289aa80a2d7cb762bfe0e16b9c468') {
-      window.open('https://drive.google.com/file/d/1dfEEe0krXma3MdERVsJJwxXGxaGiqz9a/view?usp=sharing', '_blank')
+      window.open('https://drive.google.com/file/d/199ctf6_1NTa5krLXEVMiCNgvef6TRKFk/view?usp=sharing', '_blank')
       setPassword('')
       onClose()
     } else {
