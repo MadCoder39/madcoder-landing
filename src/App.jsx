@@ -674,6 +674,14 @@ const projects = [
     outcome: 'Contributed to a 7-digit funding round and built out a senior engineering team.',
   },
   {
+    image: '/projects/InKonbini.png',
+    title: 'InKonbini',
+    summary:
+      'Advised an indie game project on business development, positioning, and early-stage growth.',
+    role: 'Advisor',
+    outcome: 'Supported fundraising efforts and helped shape the project\'s business direction.',
+  },
+  {
     image: '/projects/VATTS.jpeg',
     title: 'VATTS: AI for Curious Kids',
     link: 'https://apps.apple.com/us/app/vatts-ai-for-curious-kids/id6450422355',
