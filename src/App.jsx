@@ -647,6 +647,15 @@ function Skills() {
 
 const projects = [
   {
+    image: '/projects/leea logo.png',
+    title: 'Sales Agent Pitcher',
+    link: 'https://www.producthunt.com/products/ai-pitcher-agent',
+    summary:
+      'Built an autonomous AI pitch agent for Leea that joined Google Meet calls and presented the company without manual participation.',
+    role: 'Product / AI Workflow Builder',
+    outcome: 'Reached 40+ angels and partners, supporting fundraising efforts.',
+  },
+  {
     image: '/projects/foxli.jpeg',
     title: 'Foxli.io',
     link: 'https://foxli.io',
