@@ -25,17 +25,46 @@ import {
 
 /* ───────────────────────── helpers ───────────────────────── */
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false)
+  useState(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setMobile(mq.matches)
+    const handler = (e) => setMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  })
+  return mobile
+}
+
+function AnimCard({ children, index = 0, className = '', ...rest }) {
+  const mobile = useIsMobile()
+  return (
+    <motion.div
+      initial={mobile ? { opacity: 0 } : { opacity: 0, y: 30 }}
+      whileInView={mobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: mobile ? '-20px' : '-40px' }}
+      transition={mobile ? { duration: 0.3 } : { duration: 0.5, delay: index * 0.08 }}
+      className={className}
+      {...rest}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
 function Section({ children, id, className = '' }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-80px' })
+  const isInView = useInView(ref, { once: true, margin: '-40px' })
+  const mobile = useIsMobile()
 
   return (
     <motion.section
       ref={ref}
       id={id}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: mobile ? 0 : 40 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, ease: 'easeOut' }}
+      transition={{ duration: mobile ? 0.3 : 0.7, ease: 'easeOut' }}
       className={`relative px-6 md:px-12 lg:px-20 ${className}`}
     >
       {children}
@@ -158,9 +187,8 @@ function CVModal({ isOpen, onClose }) {
 
 function Nav() {
   const links = [
-    { label: 'About', href: '#about' },
     { label: 'Experience', href: '#experience' },
-    { label: 'Value', href: '#strengths' },
+    { label: 'Skills', href: '#strengths' },
     { label: 'Projects', href: '#projects' },
     { label: 'Contact', href: '#contact' },
   ]
@@ -225,7 +253,7 @@ function Hero({ onCVClick }) {
         >
           <div className="absolute inset-0 mx-auto w-44 h-44 md:w-52 md:h-52 rounded-full bg-gradient-to-br from-accent-orange via-accent-orange-light to-accent-green blur-2xl opacity-40 animate-pulse" />
           <img
-            src="/photo.JPG"
+            src="/photo.jpg"
             alt="Ilya Efimov"
             className="relative mx-auto w-44 h-44 md:w-52 md:h-52 rounded-full object-cover border-2 border-white/10 shadow-2xl shadow-accent-orange/20"
             onError={(e) => {
@@ -241,7 +269,8 @@ function Hero({ onCVClick }) {
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-5xl md:text-7xl font-extrabold text-white tracking-tight"
+          className="text-5xl md:text-7xl font-bold text-white tracking-tight"
+          style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
         >
           Ilya Efimov
         </motion.h1>
@@ -252,8 +281,9 @@ function Hero({ onCVClick }) {
           transition={{ duration: 0.7, delay: 0.35 }}
           className="mt-5 text-lg md:text-xl font-medium text-accent-orange tracking-wide"
         >
-          Technical Business Development · Solutions Engineering · AI-First
-          Product Building
+          AI Solutions Architect | AI Agents,
+          <br />
+          Solution Design & Technical Delivery
         </motion.p>
 
         <motion.p
@@ -262,9 +292,11 @@ function Hero({ onCVClick }) {
           transition={{ duration: 0.7, delay: 0.5 }}
           className="mx-auto mt-6 max-w-2xl text-zinc-400 text-base md:text-lg leading-relaxed"
         >
-          I work at the intersection of technology, product, and growth —
-          building, positioning, and shipping products across AI, developer
-          tooling, Web3, and game technology.
+          Hands-on technical leader with proven delivery across AI agents,
+          multi-agent systems, simulation, and startup software: built and
+          tested MVPs, raised a 6-figure startup runway, helped secure a
+          7-digit investment round, and developed simulation systems for
+          autonomous driving AI in ambiguous, early-stage environments.
         </motion.p>
 
         {/* CTA buttons */}
@@ -372,12 +404,9 @@ function Highlights() {
           {highlights.map((h, i) => {
             const isOrange = h.color === 'orange'
             return (
-              <motion.div
+              <AnimCard
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
+                index={i}
                 className="group relative rounded-2xl border border-white/5 bg-dark-800/60 p-6 hover:border-white/10 hover:bg-dark-700/60 transition-all duration-300"
               >
                 <div
@@ -399,7 +428,7 @@ function Highlights() {
                 <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
                   {h.label}
                 </p>
-              </motion.div>
+              </AnimCard>
             )
           })}
         </div>
@@ -408,39 +437,6 @@ function Highlights() {
   )
 }
 
-/* ───────────────────────── About ───────────────────────── */
-
-function About() {
-  return (
-    <Section id="about" className="py-24 md:py-32">
-      <div className="mx-auto max-w-6xl">
-        <SectionTitle>About</SectionTitle>
-
-        <div className="relative rounded-2xl border border-white/5 bg-dark-800/40 p-8 md:p-12">
-          <GlowBlob className="w-72 h-72 bg-accent-green -top-20 -right-20" />
-
-          <p className="relative text-lg md:text-xl text-zinc-300 leading-relaxed max-w-3xl">
-            I combine hands-on engineering understanding with product thinking,
-            partnerships, and go-to-market execution. I've worked across
-            startups and technical products, often bridging developers, business
-            stakeholders, and users.
-          </p>
-          <p className="relative mt-6 text-lg md:text-xl text-zinc-300 leading-relaxed max-w-3xl">
-            Today, I focus on{' '}
-            <span className="text-accent-orange font-semibold">
-              AI-native workflows
-            </span>
-            ,{' '}
-            <span className="text-accent-green font-semibold">
-              technical product strategy
-            </span>
-            , and solution-oriented execution.
-          </p>
-        </div>
-      </div>
-    </Section>
-  )
-}
 
 /* ───────────────────────── Experience ───────────────────────── */
 
@@ -457,7 +453,7 @@ const experiences = [
   },
   {
     title: 'Leea Labs',
-    role: 'Co-Founder & CBDO',
+    role: 'Co-Founder & CIO',
     descriptor: 'AI agents and Web3 infrastructure startup',
     bullets: [
       'Raised 6-figure startup runway and led BD across AI and infrastructure concepts.',
@@ -509,12 +505,9 @@ function Experience() {
           {experiences.map((exp, i) => {
             const isOrange = exp.accent === 'orange'
             return (
-              <motion.div
+              <AnimCard
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
+                index={i}
                 className="group relative rounded-2xl border border-white/5 bg-dark-800/60 p-7 md:p-8 hover:border-white/10 hover:bg-dark-700/50 transition-all duration-300"
               >
                 <div
@@ -550,7 +543,7 @@ function Experience() {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </AnimCard>
             )
           })}
         </div>
@@ -561,57 +554,61 @@ function Experience() {
 
 /* ───────────────────────── Strengths ───────────────────────── */
 
-const strengths = [
+const skills = [
   {
-    title: 'Product & Technical',
-    icon: Code,
+    title: 'AI & Solution Design',
+    icon: Bot,
     items: [
-      'AI-First Workflows',
-      'Product Development',
-      'MVPs',
-      'Developer Tooling',
-      'Solutions Architecture',
+      'AI Agents & Multi-Agent Systems',
+      'Private AI',
+      'Solution Design',
+      'MVP Validation',
     ],
   },
   {
-    title: 'Growth & Positioning',
+    title: 'Stakeholder & Delivery',
     icon: Target,
     items: [
-      'Technical Business Development',
-      'Partnerships',
-      'Solution Positioning',
-      'Sales',
+      'Technical Communication',
+      'Requirements Shaping',
+      'Cross-Functional Delivery',
+      'Roadmapping',
+      'Stakeholder Management',
     ],
   },
   {
-    title: 'Execution',
+    title: 'Technical Delivery',
+    icon: Code,
+    items: [
+      'Unity & Unreal Engine',
+      'Real-Time Simulation Systems',
+      'Git / Jira / Scrum / CI/CD',
+    ],
+  },
+  {
+    title: 'AI-Native Workflows',
     icon: Zap,
     items: [
-      'Cross-Functional Leadership',
-      'Fast Iteration',
-      'Roadmap Planning',
-      'Technical Translation',
+      'Claude Code / Cursor / MCPs',
+      'Prompt Engineering',
     ],
   },
 ]
 
-function Strengths() {
+function Skills() {
   return (
     <Section id="strengths" className="py-24 md:py-32">
       <div className="mx-auto max-w-6xl">
         <SectionTitle>
-          Where I Add Value
+          Skills
         </SectionTitle>
 
-        <div className="flex flex-col md:flex-row md:justify-center gap-5">
-          {strengths.map((col, i) => (
-            <motion.div
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {skills.map((col, i) => (
+            <AnimCard
               key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, delay: i * 0.12 }}
-              className="rounded-2xl border border-white/5 bg-dark-800/50 p-6 hover:border-white/10 transition-all duration-300 md:w-64 flex-shrink-0"
+              index={i}
+              className="rounded-2xl border border-white/5 bg-dark-800/50 p-6 hover:border-white/10 transition-all duration-300"
             >
               <div className="mb-4 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-accent-orange/10 text-accent-orange">
                 <col.icon className="w-4.5 h-4.5" />
@@ -628,7 +625,7 @@ function Strengths() {
                   </li>
                 ))}
               </ul>
-            </motion.div>
+            </AnimCard>
           ))}
         </div>
       </div>
@@ -640,22 +637,22 @@ function Strengths() {
 
 const projects = [
   {
-    image: '/projects/the games cloud.jpeg',
-    title: 'The Games Cloud',
-    link: 'https://www.linkedin.com/company/the-games-cloud',
+    image: '/projects/foxli.jpeg',
+    title: 'Foxli.io',
+    link: 'https://foxli.io',
     summary:
-      'From internal tool to MRR-generating startup. DevOps-as-a-Service for game development studios.',
-    role: 'Co-Founder & CEO',
-    outcome: 'Reached $2K MRR within 6 months of launch.',
+      'AR iOS app for construction workflows, designed to make on-site visualization and interaction more practical and accessible.',
+    role: 'Producer',
+    outcome: 'Built and helped launch a real-world AR product for the construction space.',
   },
   {
-    image: '/projects/77bit.jpeg',
-    title: '77-Bit',
-    link: 'https://77-bit.com/',
+    image: '/projects/the oct.png',
+    title: 'TheOct.xyz',
+    link: 'https://theoct.xyz',
     summary:
-      'Led game design and narrative development. Helped take the product from concept to MVP in 12 weeks and supported NFT sales totaling $20M.',
+      'Built the initial MVP and launched it to market, helping validate the product direction and support early user traction.',
     role: 'Producer',
-    outcome: 'MVP delivered in 12 weeks, contributed to a $20M NFT sales outcome.',
+    outcome: 'MVP launched and early traction supported.',
   },
   {
     image: '/projects/phantasma.svg',
@@ -676,13 +673,40 @@ const projects = [
     outcome: 'MVP launched and initial traction achieved.',
   },
   {
-    image: '/projects/the oct.png',
-    title: 'TheOct.xyz',
-    link: 'https://theoct.xyz',
+    image: '/projects/77bit.jpeg',
+    title: '77-Bit',
+    link: 'https://77-bit.com/',
     summary:
-      'Built the initial MVP and launched it to market, helping validate the product direction and support early user traction.',
+      'Led game design and narrative development. Helped take the product from concept to MVP in 12 weeks and supported NFT sales totaling $20M.',
     role: 'Producer',
-    outcome: 'MVP launched and early traction supported.',
+    outcome: 'MVP delivered in 12 weeks, contributed to a $20M NFT sales outcome.',
+  },
+  {
+    image: '/projects/metasaurs.png',
+    title: 'Metasaurs',
+    link: 'https://drive.google.com/file/u/2/d/1MSH7pQjUe0KhExokDZnic_Z_bSIwhiEi/view?usp=sharing',
+    summary:
+      'Web-based FPS game built as additional utility for an NFT collection. Helped drive sales of the next collection (~$7M).',
+    role: 'Producer',
+    outcome: 'Delivered a playable multiplayer web FPS; helped drive ~$7M in follow-up collection sales.',
+  },
+  {
+    image: '/projects/the games cloud.jpeg',
+    title: 'The Games Cloud',
+    link: 'https://www.linkedin.com/company/the-games-cloud',
+    summary:
+      'From internal tool to MRR-generating startup. DevOps-as-a-Service for game development studios.',
+    role: 'Co-Founder & CEO',
+    outcome: 'Reached $2K MRR within 6 months of launch.',
+  },
+  {
+    image: '/projects/autokill ico.jpeg',
+    title: 'Autokill',
+    link: 'https://drive.google.com/file/d/102f5mE1F7D0Y2ANz1HO0Rh0_uBJFu7zx/view?usp=sharing',
+    summary:
+      'Mobile multiplayer extraction shooter prototype built with a custom networking solution. In-house project of Cycling Bear.',
+    role: 'Producer',
+    outcome: 'Delivered a playable demo using an in-house networking architecture.',
   },
 ]
 
@@ -696,12 +720,9 @@ function Projects() {
 
         <div className="flex flex-wrap justify-center gap-6">
           {projects.map((p, i) => (
-            <motion.div
+            <AnimCard
               key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
+              index={i}
               className="group rounded-2xl border border-white/5 bg-dark-800/50 overflow-hidden hover:border-white/10 transition-all duration-300 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]"
             >
               <div className="relative h-44 bg-dark-700 overflow-hidden">
@@ -758,7 +779,7 @@ function Projects() {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </AnimCard>
           ))}
         </div>
       </div>
@@ -776,14 +797,15 @@ function AIWorkflow() {
     { prompt: '', text: 'status: unwrinkling napkin' },
     { prompt: '>', text: 'analyze requirements' },
     { prompt: '', text: 'status: extracting actual task' },
-    { prompt: '>', text: 'build first-80' },
-    { prompt: '', text: 'status: surprisingly fast' },
-    { prompt: '>', text: 'build second-80' },
-    { prompt: '', text: 'status: where real work begins' },
+    { prompt: '>', text: 'build phase-1' },
+    { prompt: '', text: 'status: first 80% complete' },
+    { prompt: '>', text: 'build phase-2' },
+    { prompt: '', text: 'status: second 80% almost done' },
     { prompt: '>', text: 'review output' },
     { prompt: '', text: 'checks: logic, edge cases, UX' },
+    { prompt: '', text: 'status: somehow works on first try' },
     { prompt: '>', text: 'ship prototype' },
-    { prompt: '', text: 'result: delivered' },
+    { prompt: '', text: 'result: MVP delivered' },
   ]
 
   return (
@@ -831,11 +853,8 @@ function AIWorkflow() {
           </div>
 
           {/* Terminal block */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          <AnimCard
+            index={0}
             className="rounded-2xl border border-white/10 bg-dark-900 overflow-hidden shadow-2xl shadow-accent-orange/5"
           >
             <div className="flex items-center gap-2 px-5 py-3 bg-dark-800 border-b border-white/5">
@@ -851,14 +870,7 @@ function AIWorkflow() {
 
             <div className="p-5 font-mono text-sm space-y-1.5">
               {lines.map((line, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: 0.4 + i * 0.07 }}
-                  className="flex items-center gap-2"
-                >
+                <div key={i} className="flex items-center gap-2">
                   {line.prompt ? (
                     <>
                       <span className="text-accent-orange">{line.prompt}</span>
@@ -867,14 +879,14 @@ function AIWorkflow() {
                   ) : (
                     <span className="text-zinc-500 pl-4">{line.text}</span>
                   )}
-                </motion.div>
+                </div>
               ))}
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-accent-orange">{'>'}</span>
                 <span className="w-2 h-4 bg-accent-orange/80 animate-pulse" />
               </div>
             </div>
-          </motion.div>
+          </AnimCard>
         </div>
       </div>
     </Section>
@@ -889,13 +901,7 @@ function Contact({ onCVClick }) {
       <div className="mx-auto max-w-3xl text-center">
         <GlowBlob className="w-96 h-96 bg-accent-orange top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="relative"
-        >
+        <AnimCard index={0} className="relative">
           <Bot className="mx-auto w-12 h-12 text-accent-orange mb-6" />
           <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
             Let's Build Something Together
@@ -927,7 +933,7 @@ function Contact({ onCVClick }) {
               <FileText className="w-4 h-4" /> Download CV
             </button>
           </div>
-        </motion.div>
+        </AnimCard>
       </div>
     </Section>
   )
@@ -956,9 +962,8 @@ export default function App() {
       <Nav />
       <Hero onCVClick={openCVModal} />
       <Highlights />
-      <About />
       <Experience />
-      <Strengths />
+      <Skills />
       <Projects />
       <AIWorkflow />
       <Contact onCVClick={openCVModal} />
